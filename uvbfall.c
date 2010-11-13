@@ -16,7 +16,14 @@ fftw_complex *in,
 			 *out;
 fftw_plan plan;
 
-uint8_t* tex_ptr;
+struct pixel
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+};
+
+struct pixel* tex_ptr;
 
 uint8_t init_opengl(int res_x, int res_y)
 {
@@ -52,13 +59,20 @@ void draw_frame(int len, int res_x, int res_y)
     		in[i] = ((float)raw[i] / 65535.0) - 1;
 		fftw_execute(plan);
 		memmove(tex_ptr+res_x, tex_ptr, res_x*(res_y-1));
-		tex_ptr[0] = 0;
+		tex_ptr[0].r = 0;
+		tex_ptr[0].g = 0;
+		tex_ptr[0].b = 0;
 
 		for (int i = 1; i < len/2; i++)
-			tex_ptr[i] = cabs(out[i] + out[len-i]) / (float) len * 255.0;
-		glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,
+		{
+			/*Здесь должна быть хитрая цветовая логика, но она запаздывает*/
+			tex_ptr[i].r = cabs(out[i] + out[len-i]) / (float) len * 255.0;
+			tex_ptr[i].g = cabs(out[i] + out[len-i]) / (float) len * 255.0;
+			tex_ptr[i].b = cabs(out[i] + out[len-i]) / (float) len * 255.0;
+		}
+		glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,
 						len/2,len/2,0,
-						GL_LUMINANCE,
+						GL_RGB,
 						GL_UNSIGNED_BYTE, tex_ptr);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBegin(GL_QUADS);
@@ -116,7 +130,7 @@ int main(int argc, char* argv[])
 	in = fftw_malloc(sizeof(fftw_complex) * len);
 	out = fftw_malloc(sizeof(fftw_complex) * len);
 	plan = fftw_plan_dft_1d(len, in, out, FFTW_FORWARD, FFTW_MEASURE);
-	tex_ptr = calloc(len * len /2, sizeof(uint8_t));
+	tex_ptr = calloc(len * len /2, sizeof(struct pixel));
 
 	if(!init_opengl(res_x,res_y))
 	{
