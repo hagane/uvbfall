@@ -123,10 +123,18 @@ int main(int argc, char* argv[])
 		puts("OpenGL init failed.");
 		return -4;
 	}
-
+	SDL_Event ev;
 	while(1)
 	{
 			draw_frame(len, res_x, res_y);
+			if(SDL_PollEvent(&ev) != 0)
+			{
+				if(ev.type == SDL_QUIT)
+				{
+					puts("SDL_QUIT received. Shutting down.");
+					break;
+				}
+			} 			
 	}
 
 	fftw_destroy_plan(plan);
