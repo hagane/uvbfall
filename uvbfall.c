@@ -44,32 +44,18 @@ uint8_t init_opengl(int res_x, int res_y)
 	return 0;
 }
 
-void scroll_texture(int len)
-{
-	int size = len/2;
-	for(int y = (size-2); y > 0 ; y--)
-	{
-		for(int x = 0; x < size; x++)
-		{
-			tex_ptr[((x+1)*size)+y] = tex_ptr[x*size+y];
-		}
-	}
-}
-
 void draw_frame(int len, int res_x, int res_y)
 {
-		fread(raw, sizeof(uint16_t), len, stdin);
+		if (!fread(raw, sizeof(uint16_t), len, stdin))
+			exit(1);
 		for (int i = 0; i < len; i++)
-		{
     		in[i] = ((float)raw[i] / 65535.0) - 1;
-		}
 		fftw_execute(plan);
-		scroll_texture(len);
+		memmove(tex_ptr+res_x, tex_ptr, res_x*(res_y-1));
 		tex_ptr[0] = 0;
+
 		for (int i = 1; i < len/2; i++)
-		{
-			tex_ptr[i] = cabs(out[i] + out[len-i]) * 0xFF;
-		}
+			tex_ptr[i] = cabs(out[i] + out[len-i]) / (float) len * 255.0;
 		glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,
 						len/2,len/2,0,
 						GL_LUMINANCE,
@@ -81,7 +67,7 @@ void draw_frame(int len, int res_x, int res_y)
 			glTexCoord2f(1.0,1.0); glVertex2f(res_x,res_y);
 			glTexCoord2f(0.0,1.0); glVertex2f(0.0,res_y);
 		glEnd();
-		SDL_GL_SwapBuffers();
+		SDL_GL_SwapBuffers(); 
 }
 
 int main(int argc, char* argv[])
@@ -149,3 +135,4 @@ int main(int argc, char* argv[])
 	free(raw);
 	free(tex_ptr);
 }
+
