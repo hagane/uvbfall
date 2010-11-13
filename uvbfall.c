@@ -58,17 +58,29 @@ void draw_frame(int len, int res_x, int res_y)
 		for (int i = 0; i < len; i++)
     		in[i] = ((float)raw[i] / 65535.0) - 1;
 		fftw_execute(plan);
-		memmove(tex_ptr+res_x, tex_ptr, res_x*(res_y-1));
+		memmove(tex_ptr+res_x, tex_ptr, res_x*(res_y-1)*sizeof(struct pixel));
 		tex_ptr[0].r = 0;
 		tex_ptr[0].g = 0;
 		tex_ptr[0].b = 0;
 
+		float val;
 		for (int i = 1; i < len/2; i++)
 		{
 			/*Здесь должна быть хитрая цветовая логика, но она запаздывает*/
-			tex_ptr[i].r = cabs(out[i] + out[len-i]) / (float) len * 255.0;
-			tex_ptr[i].g = cabs(out[i] + out[len-i]) / (float) len * 255.0;
-			tex_ptr[i].b = cabs(out[i] + out[len-i]) / (float) len * 255.0;
+			val = cabs(out[i] + out[len-i]) / (float) len * 4;
+			if (val < 0.25) {
+				tex_ptr[i].r = val * 4 * 255;
+				tex_ptr[i].g = tex_ptr[i].b = 0;
+			}
+			else if (val < .5) {
+				tex_ptr[i].r = 255;
+				tex_ptr[i].g = (val-0.25) * 4 * 255;
+				tex_ptr[i].b = 0;
+			}
+			else {
+				tex_ptr[i].r = tex_ptr[i].g = 255;
+				tex_ptr[i].b = (val - 0.5) * 4 * 255;
+			}
 		}
 		glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,
 						len/2,len/2,0,
