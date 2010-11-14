@@ -27,6 +27,7 @@ struct pixel
 struct pixel* tex_ptr;
 
 int len, res_x, res_y;
+bool realtime = false;
 
 // LOL, state machine :3
 enum {
@@ -124,6 +125,7 @@ int main(int argc, char* argv[])
 			return -1;
 	}
 	len = atoi(argv[1]);
+	int delay;
 	for(int a = 1; a < argc; a++)
 	{
 		if(((char*)argv[a])[0] == '-')
@@ -135,6 +137,7 @@ int main(int argc, char* argv[])
 			{
 				case 'x': res_x = res; break;
 				case 'y': res_y = res; break;
+				case 'r': delay = (int)(len/(float)res*1000)/10*10; realtime = true; break;
 				default: printf("Unknown parameter: %c", dim);
 						 return -2;
 			}
@@ -164,9 +167,10 @@ int main(int argc, char* argv[])
 		return -4;
 	}
 
-	int delay = len/atof(argv[2]) * 1000;
-	printf("Delay %i\n", delay);
-	SDL_AddTimer(delay, timer_func, NULL);
+	if (realtime) {
+		printf("delay %i\n", delay);
+		SDL_AddTimer(delay, timer_func, NULL);
+	}
 	SDL_Event ev;
 	while(1) {
 		if(SDL_PollEvent(&ev) != 0)	{
@@ -175,10 +179,16 @@ int main(int argc, char* argv[])
 				break;
 			}
 		}
-		switch (need) {
-			case NEED_PROCESS: process(); break;
-			case NEED_DRAW: draw(); break;
-			default: ;
+		if (realtime) {
+			switch (need) {
+				case NEED_PROCESS: process(); break;
+				case NEED_DRAW: draw(); break;
+				default: ;
+			}
+		}
+		else {
+			process();
+			draw();
 		}
 		// let other processeses do stuff
 		SDL_Delay(1);
