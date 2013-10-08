@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
 {
 	if(argc < 2)
 	{
-			printf("Usage: %s <DFT length> <bitrate> [-xNNN -yNNN -bNNN]\n", argv[0]);
+			printf("Usage: %s <DFT length> <bitrate> [-xNNN -yNNN] [-r]\n", argv[0]);
 			return -1;
 	}
 	len = atoi(argv[1]);
